@@ -21,8 +21,8 @@ In order to use and secure your firestore, navigate to the rules tab of the fire
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-		match /{document=**} {
-    	allow create: if request.auth.token.admin == true;
+    match /{document=**} {
+      allow create: if request.auth.token.admin == true;
       allow read: if request.auth.token.admin == true;
       allow update: if request.auth.token.admin == true;
       allow delete: if request.auth.token.admin == true;
