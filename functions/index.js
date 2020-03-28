@@ -13,7 +13,7 @@ const REGION = env.host.region;
 
 const DB_INDIVIDUAL_REPORT_DEV = env.db.dev;
 const DB_INDIVIDUAL_REPORT = env.db.report;
-const DB_INDIVIDUAL_REPORT_V2 = env.db.report2;
+const DB_INDIVIDUAL_REPORT_V2 = env.db.report;
 const DB_INDIVIDUAL_REPORT_V2_SUSPICIOUS = env.db.suspicious;
 
 const HTTP_OK = 200;

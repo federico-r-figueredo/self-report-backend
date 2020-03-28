@@ -1,6 +1,8 @@
 # self-report backend
 
-Firebase functions for covid-self-report.
+Firebase function for covid-self-report.
+
+This firebase function will validate request using Google's reCaptcha v3 before inserting data into firestore, you must as such create a reCaptcha project (if you want to use it) and have firestore available in your Firebase project.
 
 ## Getting started
 1. Create a firebase project if not already done
