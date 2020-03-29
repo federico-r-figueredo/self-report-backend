@@ -14,7 +14,7 @@ This firebase function will validate request using Google's reCaptcha v3 before 
 
 ### Configuration file
 You have to manually create a `/functions/.runtimeconfig.json` file and set your backend config in it.
-```json
+```js
 {
   "host": {
     "domain": "", // Currently unused
