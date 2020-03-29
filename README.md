@@ -12,10 +12,12 @@ This firebase function will validate request using Google's reCaptcha v3 before 
 5. Run `npm run env` from within the functions directory to populate your environment variables
 6. Run `firebase serve` to test locally and `firebase deploy` to deploy it
 
-## Firebase Firestore configuration
+## Firebase
+
+### Firestore
 After creating your firebase project, navigate to your database section and make sure to enable native firestore. This is required to be able to use the Firestore API from within functions.
 
-### Firestore rules
+### Rules
 In order to use and secure your firestore, navigate to the rules tab of the firestore section, and write the following content:
 ```
 rules_version = '2';
@@ -37,3 +39,20 @@ We encourage you to add indexes to your firestore collections, most importantly 
 - Timestamp ASC
 - Locator ASC
 - diagnostic ASC
+
+
+### Using firebase.json (optional)
+Your `.firebase.json` file contains metadata about the project, including valuable informations if you want to host the frontend on Firebase. For it, you can use this simple configuration:
+```json
+{
+    "hosting": {
+        "public": "public",
+        "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+        ]
+    }
+}
+```
+Please note that the published website **must** be inside the /public directory. As such, you must first build the frontend and copy the dist/ content inside the public directory.
