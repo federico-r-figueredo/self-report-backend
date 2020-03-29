@@ -12,6 +12,29 @@ This firebase function will validate request using Google's reCaptcha v3 before 
 5. Run `npm run env` from within the functions directory to populate your environment variables
 6. Run `firebase serve` to test locally and `firebase deploy` to deploy it
 
+### Configuration file
+You have to manually create a `/functions/.runtimeconfig.json` file and set your backend config in it.
+```json
+{
+  "host": {
+    "domain": "", // Currently unused
+    "region": "europe-west1" // Firebase region of hosting
+  },
+  "recaptcha": {
+    "secret": "", // Recaptcha secret value (not public key)
+    "verifyurl": "https://recaptcha.google.com/recaptcha/api/siteverify"
+  },
+  "db": {
+    "report": "", // firestore collection in which legitimate reports go
+    "suspicious": "", // firestore collection in which suspicious reports go
+    "dev": "" // firestore collection used in development, currently not used
+  },
+  "export": {
+    "token": "" // A token you can set to whatever value (we recommand using https://passwordsgenerator.net/ to generate a secure hash) this will be used to secure the export_json function
+  }
+}
+```
+
 ## Firebase
 
 ### Firestore
