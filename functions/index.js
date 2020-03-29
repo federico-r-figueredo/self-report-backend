@@ -16,13 +16,15 @@ const DB_INDIVIDUAL_REPORT = env.db.report;
 const DB_INDIVIDUAL_REPORT_V2 = env.db.report;
 const DB_INDIVIDUAL_REPORT_V2_SUSPICIOUS = env.db.suspicious;
 
+const EXPORT_SECURITY_TOKEN = env.export.token;
+
 const HTTP_OK = 200;
 
 const RECAPTCHA_SECRET = env.recaptcha.secret;
 const RECAPTCHA_VERIFY_URL = env.recaptcha.verifyurl;
 
 exports.report = functions.region(REGION).https.onRequest(async (req, res) =>
-    cors(req, res, async () => {
+   cors(req, res, async () => {
       console.log('Report request received');
 
       //Front-end will send the token
@@ -87,3 +89,33 @@ exports.report = functions.region(REGION).https.onRequest(async (req, res) =>
       }
     })
 );
+
+
+exports.export_json = functions.region(REGION).https.onRequest((req, res) => {
+
+  if (req.method !== 'GET') {
+    res.status(400).json({"error": "Wrong HTTP Method used"});
+  }
+
+  const { start, end, token } = req.query;
+
+  if (end === undefined) return res.status(400).send('end is missing');
+  if (start === undefined) return res.status(400).send('start is missing');
+
+  if (token !== EXPORT_SECURITY_TOKEN) {
+    res.status(401).json({"error": "Invalid security token"});
+  }
+
+  const db = admin.firestore();
+  db.collection(DB_INDIVIDUAL_REPORT)
+      .where('timestamp', '>=', new Date(start))
+      .where('timestamp', '<', new Date(end))
+      .get().then(snapshot => {
+        if (snapshot.empty) res.status(404).json({"error": "Empty collection"});
+        else res.status(200).json(snapshot.docs.map((doc) => ({ id: doc.id, data: doc.data() })));
+      })
+      .catch(err => {
+        console.log('Error getting documents', err);
+        res.status(400).json({"error": "Error getting documents"})
+      });
+});
