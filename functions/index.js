@@ -7,7 +7,7 @@ const cors = require('cors')({
 
 // admin.initializeApp(functions.config().firebase);
 
-var serviceAccount = require('./covidmap.json')
+var serviceAccount = require('./.covidmap.json')
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
