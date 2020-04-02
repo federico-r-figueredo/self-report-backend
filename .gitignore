@@ -68,4 +68,3 @@ node_modules/
 functions/firebase-debug.log
 functions/.runtimeconfig.json
 functions/.covidmap.json
-functions/.DS_Store
