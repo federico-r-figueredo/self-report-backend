@@ -31,7 +31,7 @@ const HTTP_OK = 200
 const RECAPTCHA_SECRET = env.recaptcha.secret
 const RECAPTCHA_VERIFY_URL = env.recaptcha.verifyurl
 
-exports.report = functions.region(REGION).https.onRequest(async (req, res) =>
+exports.report = functions.region(REGION).https.onRequest((req, res) =>
   cors(req, res, async () => {
     console.log('Report request received')
 
@@ -39,37 +39,31 @@ exports.report = functions.region(REGION).https.onRequest(async (req, res) =>
     const { token, symptoms, locator, sessionId, diagnostic } = req.body
     const db = admin.firestore()
 
-    if (token === undefined) return res.status(400).send('token is missing')
-    if (locator === undefined) return res.status(400).send('postal code is missing')
-    if (sessionId === undefined) return res.status(400).send('session id is missing')
-    if (diagnostic === undefined) return res.status(400).send('diagnostic is missing')
+    if (token === undefined) return res.status(500).send('token is missing')
+    if (locator === undefined) return res.status(500).send('postal code is missing')
+    if (sessionId === undefined) return res.status(500).send('session id is missing')
+    if (diagnostic === undefined) return res.status(500).send('diagnostic is missing')
 
     console.log('Report data is valid')
 
     try {
-      console.log('Verifying recaptcha token')
-      const response = await axios.post(
-        `${RECAPTCHA_VERIFY_URL}?secret=${RECAPTCHA_SECRET}&response=${token}`,
-        {},
-        {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded; charset=utf-8'
-          }
-        }
-      )
+      // console.log('Verifying recaptcha token')
+      // const response = await axios.get(`${RECAPTCHA_VERIFY_URL}?secret=${RECAPTCHA_SECRET}&response=${token}`)
 
-      const data = response.data
-      console.log('Token verification finished', data)
+      // const data = response.data
+      // console.log('Token verification finished', data)
 
-      if (!data.success) {
-        console.error('recaptcha token is not valid')
-        return res.status(400).send('Recaptcha token is not valid')
-      }
+      // if (!data.success) {
+      //   console.error('recaptcha token is not valid')
+      //   return res.status(500).send('Recaptcha token is not valid')
+      // }
 
-      console.log('recaptcha token is valid, score:', data.score)
-      const suspicious = data.score < 0.7
+      // console.log('recaptcha token is valid, score:', data.score)
+      // const suspicious = data.score < 0.7
 
-      const targetDb = suspicious ? DB_INDIVIDUAL_REPORT_V2_SUSPICIOUS : DB_INDIVIDUAL_REPORT_V2
+      // const targetDb = suspicious ? DB_INDIVIDUAL_REPORT_V2_SUSPICIOUS : DB_INDIVIDUAL_REPORT_V2
+
+      const targetDb = DB_INDIVIDUAL_REPORT_V2
 
       try {
         const report = {
@@ -77,14 +71,43 @@ exports.report = functions.region(REGION).https.onRequest(async (req, res) =>
           sessionId,
           symptoms,
           diagnostic,
-          timestamp: new Date(),
-          score: data.score
+          timestamp: new Date()
+          // score: data.score
         }
         console.log('Adding report to DB: ', targetDb, report)
+        
+        // const existing = await db
+        //   .collection(targetDb)
+        //   .where('sessionId', '==', report.sessionId)
+        //   .limit(1)
+        //   .get()
+
+        // let promise
+        // if (!existing.empty) {
+        //   existing.forEach(snapshot => {
+        //     promise = new Promise(async resolve => {
+        //       await db
+        //         .collection(targetDb)
+        //         .doc(snapshot.id)
+        //         .set(report)
+        //       resolve()
+        //     })
+        //   })
+        //   await Promise.resolve(promise)
+        // } else {
+        // }
+        
         await db.collection(targetDb).add(report)
 
         console.log('Report added')
-        res.status(HTTP_OK).send('')
+        res.set('Access-Control-Allow-Origin', '*')
+        res.set('Access-Control-Allow-Credentials', 'true')
+        res.set('Access-Control-Allow-Methods', 'GET')
+        res.set('Access-Control-Allow-Headers', 'Content-Type')
+        res.set('Access-Control-Max-Age', '3600')
+        res.status(HTTP_OK).json({
+          success: true
+        })
       } catch (error) {
         console.log('Error adding the report to the database', error)
         res.status(500).send(`Could not register your report: ${error}`)
@@ -98,13 +121,13 @@ exports.report = functions.region(REGION).https.onRequest(async (req, res) =>
 
 exports.export_json = functions.region(REGION).https.onRequest((req, res) => {
   if (req.method !== 'GET') {
-    res.status(400).json({ error: 'Wrong HTTP Method used' })
+    res.status(500).json({ error: 'Wrong HTTP Method used' })
   }
 
   const { start, end, token } = req.body
 
-  if (end === undefined) return res.status(400).send('end is missing')
-  if (start === undefined) return res.status(400).send('start is missing')
+  if (end === undefined) return res.status(500).send('end is missing')
+  if (start === undefined) return res.status(500).send('start is missing')
 
   if (token !== EXPORT_SECURITY_TOKEN) {
     res.status(401).json({ error: 'Invalid security token' })
@@ -121,6 +144,6 @@ exports.export_json = functions.region(REGION).https.onRequest((req, res) => {
     })
     .catch(err => {
       console.log('Error getting documents', err)
-      res.status(400).json({ error: 'Error getting documents' })
+      res.status(500).json({ error: 'Error getting documents' })
     })
 })
