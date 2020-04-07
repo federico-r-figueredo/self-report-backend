@@ -2,7 +2,7 @@ const functions = require('firebase-functions')
 const admin = require('firebase-admin')
 const axios = require('axios')
 const cors = require('cors')({
-  origin: true
+  origin: true,
 })
 
 // admin.initializeApp(functions.config().firebase);
@@ -11,7 +11,7 @@ var serviceAccount = require('./.covidmap.json')
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  databaseURL: 'https://covidmap-41f56.firebaseio.com'
+  databaseURL: 'https://covidmap-41f56.firebaseio.com',
 })
 
 const env = functions.config()
@@ -36,7 +36,7 @@ exports.report = functions.region(REGION).https.onRequest((req, res) =>
     console.log('Report request received')
 
     //Front-end will send the token
-    const { token, symptoms, locator, sessionId, diagnostic } = req.body
+    const { token, symptoms, locator, sessionId, diagnostic, age, sex } = req.body
     const db = admin.firestore()
 
     if (token === undefined) return res.status(500).send('token is missing')
@@ -71,32 +71,13 @@ exports.report = functions.region(REGION).https.onRequest((req, res) =>
           sessionId,
           symptoms,
           diagnostic,
-          timestamp: new Date()
+          age,
+          sex,
+          timestamp: new Date(),
           // score: data.score
         }
         console.log('Adding report to DB: ', targetDb, report)
-        
-        // const existing = await db
-        //   .collection(targetDb)
-        //   .where('sessionId', '==', report.sessionId)
-        //   .limit(1)
-        //   .get()
 
-        // let promise
-        // if (!existing.empty) {
-        //   existing.forEach(snapshot => {
-        //     promise = new Promise(async resolve => {
-        //       await db
-        //         .collection(targetDb)
-        //         .doc(snapshot.id)
-        //         .set(report)
-        //       resolve()
-        //     })
-        //   })
-        //   await Promise.resolve(promise)
-        // } else {
-        // }
-        
         await db.collection(targetDb).add(report)
 
         console.log('Report added')
@@ -106,7 +87,7 @@ exports.report = functions.region(REGION).https.onRequest((req, res) =>
         res.set('Access-Control-Allow-Headers', 'Content-Type')
         res.set('Access-Control-Max-Age', '3600')
         res.status(HTTP_OK).json({
-          success: true
+          success: true,
         })
       } catch (error) {
         console.log('Error adding the report to the database', error)
@@ -120,7 +101,7 @@ exports.report = functions.region(REGION).https.onRequest((req, res) =>
 )
 
 exports.export_json = functions.region(REGION).https.onRequest((req, res) => {
-  if (req.method !== 'GET') {
+  if (req.method !== 'POST') {
     res.status(500).json({ error: 'Wrong HTTP Method used' })
   }
 
@@ -138,12 +119,23 @@ exports.export_json = functions.region(REGION).https.onRequest((req, res) => {
     .where('timestamp', '>=', new Date(start))
     .where('timestamp', '<', new Date(end))
     .get()
-    .then(snapshot => {
+    .then((snapshot) => {
       if (snapshot.empty) res.status(404).json({ error: 'Empty collection' })
-      else res.status(200).json(snapshot.docs.map(doc => ({ id: doc.id, data: doc.data() })))
+      else res.status(200).json(snapshot.docs.map((doc) => ({ id: doc.id, data: doc.data() })))
     })
-    .catch(err => {
+    .catch((err) => {
       console.log('Error getting documents', err)
       res.status(500).json({ error: 'Error getting documents' })
     })
+})
+
+exports.record_count = functions.region(REGION).https.onRequest((req, res) => {
+  cors(req, res, () => {
+    const db = admin.firestore()
+    db.collection(DB_INDIVIDUAL_REPORT)
+      .get()
+      .then((snapshot) => {
+        res.status(200).json({ success: true, count: snapshot.size })
+      })
+  })
 })
